@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>HEIC &rarr; ArcGIS Uploader</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>HEIC &rarr; ArcGIS Uploader</h1>
+
+    <section id="auth">
+      <label>ArcGIS username
+        <input id="user" type="text" autocomplete="username">
+      </label>
+      <label>Password
+        <input id="pass" type="password" autocomplete="current-password">
+      </label>
+      <button id="signin">Sign in</button>
+      <span id="auth-status"></span>
+    </section>
+
+    <section id="upload" hidden>
+      <p id="who"></p>
+      <input id="files" type="file" multiple accept=".heic,.HEIC,.heif,.HEIF,image/heic,image/heif,image/jpeg">
+      <button id="upload-btn">Upload</button>
+    </section>
+
+    <pre id="log"></pre>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any/dist/heic2any.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
