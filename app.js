@@ -193,6 +193,9 @@ async function uploadOne(file, idx, total) {
     }
     setField(attrs, ['filename', 'name', 'file_name', 'photo', 'image'], file.name);
 
+    const notes = ($('notes').value || '').trim();
+    if (notes) setField(attrs, ['notes', 'note', 'description', 'comments', 'comment'], notes);
+
     if (Object.keys(attrs).length) {
       log(`  attrs: ${JSON.stringify(attrs)}`);
     } else {

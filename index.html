@@ -35,9 +35,12 @@
 
     <section id="upload" hidden>
       <p id="who"></p>
-      <input id="files" type="file" multiple accept=".heic,.HEIC,.heif,.HEIF,image/heic,image/heif,image/jpeg,image/jpg">
+      <input id="files" type="file" multiple accept=".heic,.HEIC,.heif,.HEIF,image/heic,image/heif,image/jpeg,image/jpg,image/jpg">
       <p class="hint">Pick one or many. Selecting again adds to the queue (useful when picking from an iPhone in Windows Explorer, which only allows one file at a time).</p>
       <ul id="queue"></ul>
+      <label>Notes (applied to every file in this batch)
+        <textarea id="notes" rows="2" placeholder="Optional notes..."></textarea>
+      </label>
       <button id="upload-btn">Upload queue</button>
       <button id="clear-btn" type="button">Clear queue</button>
     </section>
