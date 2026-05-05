@@ -11,10 +11,14 @@ const log = (msg) => { const el = $('log'); el.textContent += msg + '\n'; el.scr
 const queue = [];
 
 $('signin').onclick = signIn;
+$('signin-token').onclick = signInWithToken;
+$('show-token').onclick = () => { $('auth-pw').hidden = true; $('auth-token').hidden = false; $('auth-status').textContent = ''; };
+$('show-pw').onclick = () => { $('auth-pw').hidden = false; $('auth-token').hidden = true; $('auth-status').textContent = ''; };
 $('upload-btn').onclick = uploadAll;
 $('clear-btn').onclick = () => { queue.length = 0; renderQueue(); };
 $('files').addEventListener('change', onFilesPicked);
 $('pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
+$('token-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') signInWithToken(); });
 
 function onFilesPicked(e) {
   const picked = Array.from(e.target.files || []);
@@ -48,6 +52,20 @@ function renderQueue() {
   $('upload-btn').textContent = queue.length ? `Upload ${queue.length} file${queue.length === 1 ? '' : 's'}` : 'Upload queue';
 }
 
+async function requestToken(username, password, referer) {
+  const body = new URLSearchParams({
+    username,
+    password,
+    referer,
+    client: 'referer',
+    expiration: '120',
+    f: 'json',
+  });
+  const r = await fetch(TOKEN_URL, { method: 'POST', body });
+  const j = await r.json();
+  return j;
+}
+
 async function signIn() {
   const username = $('user').value.trim();
   const password = $('pass').value;
@@ -55,28 +73,55 @@ async function signIn() {
   $('signin').disabled = true;
   $('auth-status').textContent = 'Signing in...';
   try {
-    const body = new URLSearchParams({
-      username,
-      password,
-      referer: location.origin,
-      client: 'referer',
-      expiration: '120',
-      f: 'json',
-    });
-    const r = await fetch(TOKEN_URL, { method: 'POST', body });
-    const j = await r.json();
-    if (j.error) throw new Error(j.error.message || JSON.stringify(j.error));
+    // Try with origin first; some browsers (notably iOS Safari) send a Referer
+    // with a trailing slash and ArcGIS may be picky. Retry both forms.
+    let j = await requestToken(username, password, location.origin);
+    if (j.error || !j.token) {
+      const j2 = await requestToken(username, password, location.origin + '/');
+      if (!j2.error && j2.token) j = j2;
+    }
+    if (j.error) {
+      const msg = j.error.message || JSON.stringify(j.error);
+      const details = (j.error.details && j.error.details.join('; ')) || '';
+      throw new Error(`${msg}${details ? ' — ' + details : ''}`);
+    }
     if (!j.token) throw new Error('No token returned');
     token = j.token;
     $('pass').value = '';
-    $('auth').hidden = true;
-    $('upload').hidden = false;
-    $('who').textContent = `Signed in as ${username}`;
-    await loadLayerInfo();
+    onSignedIn(username);
   } catch (e) {
-    $('auth-status').textContent = 'Sign-in failed: ' + e.message;
+    $('auth-status').textContent =
+      'Sign-in failed: ' + e.message +
+      ' — if your org uses SSO, username/password sign-in is disabled by Esri; use "Use a token instead".';
     $('signin').disabled = false;
   }
+}
+
+async function signInWithToken() {
+  const t = $('token-input').value.trim();
+  if (!t) { $('auth-status').textContent = 'Paste a token.'; return; }
+  $('signin-token').disabled = true;
+  $('auth-status').textContent = 'Validating token...';
+  try {
+    // Use the token to query the layer; if it returns metadata, the token is valid for it.
+    const r = await fetch(`${LAYER_URL}?f=json&token=${encodeURIComponent(t)}`);
+    const j = await r.json();
+    if (j.error) throw new Error(j.error.message || JSON.stringify(j.error));
+    token = t;
+    $('token-input').value = '';
+    onSignedIn('(token)');
+  } catch (e) {
+    $('auth-status').textContent = 'Token rejected: ' + e.message;
+    $('signin-token').disabled = false;
+  }
+}
+
+function onSignedIn(label) {
+  $('auth').hidden = true;
+  $('upload').hidden = false;
+  $('who').textContent = `Signed in as ${label}`;
+  $('auth-status').textContent = '';
+  loadLayerInfo();
 }
 
 async function loadLayerInfo() {
