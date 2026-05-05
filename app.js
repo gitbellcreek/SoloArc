@@ -8,9 +8,45 @@ let fieldMap = new Map();
 const $ = (id) => document.getElementById(id);
 const log = (msg) => { const el = $('log'); el.textContent += msg + '\n'; el.scrollTop = el.scrollHeight; };
 
+const queue = [];
+
 $('signin').onclick = signIn;
 $('upload-btn').onclick = uploadAll;
+$('clear-btn').onclick = () => { queue.length = 0; renderQueue(); };
+$('files').addEventListener('change', onFilesPicked);
 $('pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
+
+function onFilesPicked(e) {
+  const picked = Array.from(e.target.files || []);
+  for (const f of picked) {
+    const key = `${f.name}|${f.size}|${f.lastModified}`;
+    if (!queue.some((q) => q._key === key)) {
+      f._key = key;
+      queue.push(f);
+    }
+  }
+  e.target.value = '';
+  renderQueue();
+}
+
+function renderQueue() {
+  const ul = $('queue');
+  ul.innerHTML = '';
+  queue.forEach((f, i) => {
+    const li = document.createElement('li');
+    const span = document.createElement('span');
+    span.textContent = `${f.name}  (${(f.size / 1024 / 1024).toFixed(2)} MB)`;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '✕';
+    btn.title = 'Remove';
+    btn.onclick = () => { queue.splice(i, 1); renderQueue(); };
+    li.appendChild(span);
+    li.appendChild(btn);
+    ul.appendChild(li);
+  });
+  $('upload-btn').textContent = queue.length ? `Upload ${queue.length} file${queue.length === 1 ? '' : 's'}` : 'Upload queue';
+}
 
 async function signIn() {
   const username = $('user').value.trim();
@@ -60,20 +96,24 @@ async function loadLayerInfo() {
 }
 
 async function uploadAll() {
-  const files = Array.from($('files').files);
-  if (!files.length) { log('No files selected.'); return; }
+  if (!queue.length) { log('Queue is empty.'); return; }
   $('upload-btn').disabled = true;
+  $('clear-btn').disabled = true;
+  const total = queue.length;
   let ok = 0, fail = 0, skip = 0;
-  for (let i = 0; i < files.length; i++) {
-    const result = await uploadOne(files[i], i + 1, files.length);
+  // Drain the queue, removing each as it finishes.
+  for (let i = 0; i < total; i++) {
+    const file = queue[0];
+    const result = await uploadOne(file, i + 1, total);
     if (result === 'ok') ok++;
     else if (result === 'skip') skip++;
     else fail++;
+    queue.shift();
+    renderQueue();
   }
   log(`\nDone. ${ok} uploaded, ${skip} skipped, ${fail} failed.`);
-  // Reset selection so the user can pick more without leftover queue.
-  $('files').value = '';
   $('upload-btn').disabled = false;
+  $('clear-btn').disabled = false;
 }
 
 async function uploadOne(file, idx, total) {

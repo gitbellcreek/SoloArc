@@ -23,8 +23,11 @@
 
     <section id="upload" hidden>
       <p id="who"></p>
-      <input id="files" type="file" multiple accept=".heic,.HEIC,.heif,.HEIF,image/heic,image/heif,image/jpeg">
-      <button id="upload-btn">Upload</button>
+      <input id="files" type="file" multiple accept=".heic,.HEIC,.heif,.HEIF,image/heic,image/heif,image/jpeg,image/jpg">
+      <p class="hint">Pick one or many. Selecting again adds to the queue (useful when picking from an iPhone in Windows Explorer, which only allows one file at a time).</p>
+      <ul id="queue"></ul>
+      <button id="upload-btn">Upload queue</button>
+      <button id="clear-btn" type="button">Clear queue</button>
     </section>
 
     <pre id="log"></pre>
