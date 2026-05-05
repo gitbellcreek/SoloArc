@@ -14,17 +14,17 @@
     <section id="auth">
       <div id="auth-pw">
         <label>ArcGIS username
-          <input id="user" type="text" autocomplete="username">
+          <input id="user" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email">
         </label>
         <label>Password
-          <input id="pass" type="password" autocomplete="current-password">
+          <input id="pass" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false">
         </label>
         <button id="signin">Sign in</button>
         <button id="show-token" type="button" class="link-btn">Use a token instead</button>
       </div>
       <div id="auth-token" hidden>
         <label>Paste an ArcGIS token
-          <input id="token-input" type="text" autocomplete="off" spellcheck="false">
+          <input id="token-input" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
         </label>
         <p class="hint">Generate one at <code>https://www.arcgis.com/sharing/rest/generateToken</code> (e.g. via the REST API page) and paste here. Use this if your org uses SSO or sign-in fails on iOS.</p>
         <button id="signin-token">Use token</button>
