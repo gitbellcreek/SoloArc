@@ -5,11 +5,18 @@
   <title>HEIC &rarr; ArcGIS Uploader</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="referrer" content="origin">
-  <link rel="stylesheet" href="style.css">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <main>
-    <h1>HEIC &rarr; ArcGIS Uploader</h1>
+    <div id="topbar">
+      <h1>HEIC &rarr; ArcGIS Uploader</h1>
+      <button id="reload-btn" type="button" title="Re-fetch the latest version of this page">Reload latest</button>
+    </div>
+    <p id="version">v7</p>
 
     <section id="auth">
       <div id="auth-pw">
@@ -58,6 +65,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/heic2any/dist/heic2any.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

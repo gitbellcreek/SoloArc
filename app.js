@@ -45,6 +45,7 @@ $('show-pw').onclick = () => { $('auth-pw').hidden = false; $('auth-token').hidd
 $('upload-btn').onclick = uploadAll;
 $('clear-btn').onclick = () => { queue.length = 0; renderQueue(); };
 $('files').addEventListener('change', onFilesPicked);
+$('reload-btn').onclick = () => { location.replace(location.pathname + '?cb=' + Date.now()); };
 $('pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
 $('token-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') signInWithToken(); });
 document.querySelectorAll('input[name="layer"]').forEach((r) => r.addEventListener('change', onLayerToggle));
