@@ -1,4 +1,18 @@
-const LAYER_URL = 'https://services.arcgis.com/apTfC6SUmnNfnxuF/arcgis/rest/services/Iphone_Images/FeatureServer/0';
+const LAYERS = {
+  solocator: {
+    label: 'Solocator (Iphone_Images)',
+    url: 'https://services.arcgis.com/apTfC6SUmnNfnxuF/arcgis/rest/services/Iphone_Images/FeatureServer/0',
+    userInputs: ['notes'],
+  },
+  generic: {
+    label: 'Generic point layer (El_Rat_Generic)',
+    url: 'https://services.arcgis.com/apTfC6SUmnNfnxuF/arcgis/rest/services/El_Rat_Generic/FeatureServer/0',
+    userInputs: ['feature', 'notes'],
+  },
+};
+let activeLayerKey = 'solocator';
+const layerUrl = () => LAYERS[activeLayerKey].url;
+
 const TOKEN_URL = 'https://www.arcgis.com/sharing/rest/generateToken';
 
 let token = null;
@@ -33,6 +47,18 @@ $('clear-btn').onclick = () => { queue.length = 0; renderQueue(); };
 $('files').addEventListener('change', onFilesPicked);
 $('pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
 $('token-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') signInWithToken(); });
+document.querySelectorAll('input[name="layer"]').forEach((r) => r.addEventListener('change', onLayerToggle));
+
+function onLayerToggle(e) {
+  activeLayerKey = e.target.value;
+  applyLayerInputs();
+  if (token) loadLayerInfo();
+}
+
+function applyLayerInputs() {
+  const inputs = LAYERS[activeLayerKey].userInputs;
+  $('feature-row').hidden = !inputs.includes('feature');
+}
 
 function onFilesPicked(e) {
   const picked = Array.from(e.target.files || []);
@@ -113,7 +139,7 @@ async function signInWithToken() {
   $('signin-token').disabled = true;
   setAuthStatus('Validating token...');
   try {
-    const r = await fetch(`${LAYER_URL}?f=json&token=${encodeURIComponent(t)}`);
+    const r = await fetch(`${layerUrl()}?f=json&token=${encodeURIComponent(t)}`);
     const j = await r.json();
     if (j.error) throw new Error(j.error.message || JSON.stringify(j.error));
     token = t;
@@ -130,12 +156,13 @@ function onSignedIn(label) {
   $('upload').hidden = false;
   $('who').textContent = `Signed in as ${label}`;
   setAuthStatus('');
+  applyLayerInputs();
   loadLayerInfo();
 }
 
 async function loadLayerInfo() {
   try {
-    const r = await fetch(`${LAYER_URL}?f=json&token=${encodeURIComponent(token)}`);
+    const r = await fetch(`${layerUrl()}?f=json&token=${encodeURIComponent(token)}`);
     const j = await r.json();
     if (j.error) throw new Error(j.error.message);
     fieldMap = new Map();
@@ -153,6 +180,9 @@ async function uploadAll() {
   if (!queue.length) { log('Queue is empty.'); return; }
   $('upload-btn').disabled = true;
   $('clear-btn').disabled = true;
+  const layerRadios = document.querySelectorAll('input[name="layer"]');
+  layerRadios.forEach((r) => { r.disabled = true; });
+  log(`\nUploading to: ${LAYERS[activeLayerKey].label}`);
   const total = queue.length;
   let ok = 0, fail = 0, skip = 0;
   // Drain the queue, removing each as it finishes.
@@ -168,6 +198,7 @@ async function uploadAll() {
   log(`\nDone. ${ok} uploaded, ${skip} skipped, ${fail} failed.`);
   $('upload-btn').disabled = false;
   $('clear-btn').disabled = false;
+  layerRadios.forEach((r) => { r.disabled = false; });
 }
 
 async function uploadOne(file, idx, total) {
@@ -186,12 +217,15 @@ async function uploadOne(file, idx, total) {
       setField(attrs, ['datetaken', 'date_taken', 'timestamp', 'captured', 'phototime', 'photodate', 'date'], when);
     }
     if (exif.GPSImgDirection != null) {
-      setField(attrs, ['direction', 'bearing', 'heading', 'gpsimgdirection', 'azimuth'], exif.GPSImgDirection);
+      setField(attrs, ['direction', 'bearing', 'heading', 'gpsimgdirection', 'azimuth', 'esrisnsr_azimuth'], exif.GPSImgDirection);
     }
     if (exif.GPSAltitude != null) {
       setField(attrs, ['altitude', 'elevation', 'gpsaltitude'], exif.GPSAltitude);
     }
     setField(attrs, ['filename', 'name', 'file_name', 'photo', 'image'], file.name);
+
+    const feature = ($('feature').value || '').trim();
+    if (feature) setField(attrs, ['feature', 'feature_name', 'featurename', 'name'], feature);
 
     const notes = ($('notes').value || '').trim();
     if (notes) setField(attrs, ['notes', 'note', 'description', 'comments', 'comment'], notes);
@@ -266,7 +300,7 @@ async function addFeature(lon, lat, attributes) {
       attributes,
     }]),
   });
-  const r = await fetch(`${LAYER_URL}/addFeatures`, { method: 'POST', body });
+  const r = await fetch(`${layerUrl()}/addFeatures`, { method: 'POST', body });
   const j = await r.json();
   if (j.error) throw new Error('addFeatures: ' + j.error.message);
   const res = j.addResults && j.addResults[0];
@@ -282,7 +316,7 @@ async function addAttachment(oid, blob, filename) {
   fd.append('f', 'json');
   fd.append('token', token);
   fd.append('attachment', blob, filename);
-  const r = await fetch(`${LAYER_URL}/${oid}/addAttachment`, { method: 'POST', body: fd });
+  const r = await fetch(`${layerUrl()}/${oid}/addAttachment`, { method: 'POST', body: fd });
   const j = await r.json();
   if (j.error) throw new Error('addAttachment: ' + j.error.message);
   if (!j.addAttachmentResult || !j.addAttachmentResult.success) {
