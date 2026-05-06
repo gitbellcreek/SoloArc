@@ -1,4 +1,5 @@
 body { font: 14px system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+[hidden] { display: none !important; }
 h1 { font-size: 1.2rem; margin-bottom: 1rem; }
 section { margin-bottom: 1rem; }
 label { display: block; margin-bottom: .5rem; }
