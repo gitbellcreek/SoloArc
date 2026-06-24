@@ -10,7 +10,7 @@ const LAYERS = {
     userInputs: ['feature', 'notes'],
   },
 };
-let activeLayerKey = 'solocator';
+let activeLayerKey = 'generic';
 const layerUrl = () => LAYERS[activeLayerKey].url;
 
 const TOKEN_URL = 'https://www.arcgis.com/sharing/rest/generateToken';
